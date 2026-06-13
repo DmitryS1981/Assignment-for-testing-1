@@ -1,0 +1,38 @@
+name: Tests
+
+on:
+  push:
+    branches: [ source ]
+
+permissions:
+  contents: write
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      
+      - run: npm ci
+      - run: npm test
+      
+      - name: Setup git config
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Prepare main branch without solution
+        run: |
+          git checkout --orphan main source
+          
+          > src/index.js
+          
+          echo '*' > .gitattributes
+          git add -A
+          git commit --no-verify -m "Rebuild template (auto)"
+          git push -f --no-verify --set-upstream origin main
